@@ -61,4 +61,4 @@ ssl_stapling on;
 ssl_stapling_verify on;
 resolver 8.8.8.8 8.8.4.4 valid=86400;
 resolver_timeout 10;
-ssl_trusted_certificate ssl_trusted_certificate /path/to/all-certs-in-chain.crt;
+#ssl_trusted_certificate ssl_trusted_certificate /path/to/all-certs-in-chain.crt;

@@ -5,7 +5,7 @@ add-apt-repository ppa:nginx/stable
 apt-get update
 apt-get -y install nginx
 cp local.conf /etc/nginx/conf.d/local.conf
-mkdir /etc/nginx/ssl
+mkdir -p /etc/nginx/ssl
 cp ssl.rules /etc/nginx/ssl/ssl.rules
 cp nginx.conf /etc/nginx/nginx.conf
 
@@ -15,7 +15,7 @@ echo "Your server name, please?"
 read SERVER_NAME
 
 # Generate the Keys
-mkdir /etc/nginx/ssl/keys
+mkdir -p /etc/nginx/ssl/keys
 openssl genpkey -algorithm RSA -out /etc/nginx/ssl/keys/private.key -pkeyopt rsa_keygen_bits:2048
 # Note, this will ask you for your password twice.
 
