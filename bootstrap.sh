@@ -82,10 +82,6 @@ fi
 
 openssl dhparam -outform pem -out /etc/nginx/ssl/dhparam2048.pem 2048
 
-# Do some cleanup. Only leave the crt and the encrypted private key
-rm /etc/nginx/ssl/keys/private-decrypted.key
-rm /etc/nginx/ssl/keys/$SERVER_NAME.csr
-
 sed -i "s/SERVER_NAME/$SERVER_NAME/" /etc/nginx/conf.d/local.conf
 sed -i "s/PORT_NUMBER/$OPT_A/" /etc/nginx/conf.d/local.conf
 # sed -i "s/SSL_ROOT/$SSL_ROOT" /etc/nginx/ssl/ssl.rules

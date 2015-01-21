@@ -11,7 +11,7 @@ Command line switches are optional. The following switches are recognized.
 -s [SERVER] --Sets the value for the server name. Default is the IP address.
 -h  --Displays this help message. No further functions are performed.
 
-Example: sudo bash bootstrap.sh -d -p 4567 -cn test.example.com
+Example: sudo bash bootstrap.sh -d -p 4567 -s test.example.com
 ```
 
 To execute:
