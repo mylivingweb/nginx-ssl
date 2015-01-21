@@ -61,7 +61,7 @@ cp ssl.rules /etc/nginx/ssl/ssl.rules
 cp nginx.conf /etc/nginx/nginx.conf
 
 # Generate the Keys
-if [ $OPT_SSL -eq "False" ]
+if [ $OPT_SSL = "False" ]
 then
     mkdir -p /etc/nginx/ssl/keys
     openssl genpkey -algorithm RSA -out /etc/nginx/ssl/keys/private.key -pkeyopt rsa_keygen_bits:2048
