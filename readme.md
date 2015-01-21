@@ -2,6 +2,18 @@
 
 A simple script to provision NGINX with a self-signed SSL certificate on a Ubuntu 14.04 box.
 
+```
+Basic usage: sudo bash bootstrap.sh
+
+Command line switches are optional. The following switches are recognized.
+-d          --Sets whether SSLMate is used. Default is off.
+-p [PORT]   --Sets the value for port used for the application. Default is 5000.
+-s [SERVER] --Sets the value for the server name. Default is the IP address.
+-h  --Displays this help message. No further functions are performed.
+
+Example: sudo bash bootstrap.sh -d -p 4567 -cn test.example.com
+```
+
 To execute:
 ```
 # wget https://esq.io/nginx-ssl.tar.gz
@@ -11,5 +23,3 @@ cd nginx-ssl
 sudo ./bootstrap.sh
 sudo service nginx restart
 ```
-
-Note, this expects a server running on port 5000. To change that (until I update the configuration options), go ahead and edit `/etc/nginx/conf.d/local.conf` to put it at the port you want to run your site on.
