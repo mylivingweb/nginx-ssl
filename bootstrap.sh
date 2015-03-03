@@ -7,81 +7,106 @@
 
 NORM=`tput sgr0`
 BOLD=`tput bold`
+NGINXREPO=/etc/yum.repos.d/nginx.repo
 
-function HELP {
-  echo -e \\n"Help documentation for NGINX-SSL"\\n
-  echo -e "Basic usage: sudo bash bootstrap.sh"\\n
-  echo "Command line switches are optional. The following switches are recognized."
-  echo "-d          --Sets whether SSLMate is used. Default is ${BOLD}off${NORM}."
-  echo "-p [PORT]   --Sets the value for port used for the application. Default is ${BOLD}5000${NORM}."
-  echo "-s [SERVER] --Sets the value for the server name. Default is ${BOLD}the IP address${NORM}."
-  echo -e "-h  --Displays this help message. No further functions are performed."\\n
-  echo -e "Example: sudo bash bootstrap.sh -d -p 4567 -s test.example.com"\\n
-  exit 1
-}
-
-# NOTE: THIS SEEMS TO WORK ONLY ON UBUNTU
-IP_ADDRESS="$(ifconfig | egrep -o -m 1 'inet addr:[0-9|.]+' | egrep -o '[0-9|.]+')"
-
+# Will only work if you only have 1 public interface, please alter if you are using more than 1 public interface
+IP_ADDRESS="$(hostname -I)"
+HOSTNAME="$(hostname)"
 # Set Defaults
-OPT_A="5000"
+OPT_A="443"
 SERVER_NAME=$IP_ADDRESS
 OPT_SSL="False"
+HOSTNAMESTUFF()
+{
+    echo -e "\033[36m Your hostname is $HOSTNAME, moving on...\e[0m"
 
-# Get the command arguments
-while getopts :p:s:dh FLAG; do
-  case $FLAG in
-    d)  # is d set?
-      OPT_SSL="True"
-      ;;
-    p)  #set option "a"
-      OPT_A=$OPTARG
-      ;;
-    s)  #set option "b"
-      SERVER_NAME=$OPTARG
-      ;;
-    h)  #show help
-      HELP
-      ;;
-    \?) #unrecognized option - show help
-      echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
-      HELP
-      ;;
-  esac
-done
+}
+NGINXREPO()
+{
+	if [ -f $NGINXREPO ]
+	then
+		echo -e "\033[36m Nginx Repository is already installed, moving on...\e[0m"
+	else
+		# Add Nginx Repository
+		echo -e "\033[36mAdding Nginx Repository, Please Wait...\e[0m"
+		rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm &>> $INSTALLLOG || OwnError "Unable To Add Nginx Repository"
 
-shift $((OPTIND-1))  #This tells getopts to move on to the next argument.
+	fi
+}
+INSTALLNGINX()
+{
+	# Install Nginx Package
+	echo -e "\033[34mInstalling Nginx, Please Wait...\e[0m"
+	yum install nginx -y || OwnError "Unable To Install Nginx"
+}
+ENABLENGINX()
+{
+    echo -e "\033[36mEnabling NGINX on boot. Please Wait...\e[0m"
+    sudo systemctl enable nginx
+    echo -e "\033[36mRestarting NGINX. Please Wait...\e[0m"
+    sudo systemctl restart nginx
 
-add-apt-repository -y ppa:nginx/stable
-apt-get update
-apt-get -y install nginx
-cp local.conf /etc/nginx/conf.d/local.conf
-mkdir -p /etc/nginx/ssl
-cp ssl.rules /etc/nginx/ssl/ssl.rules
-cp nginx.conf /etc/nginx/nginx.conf
+}
+FANCYNGINX()
+{
+    echo -e "\033[36mCopying files. Please Wait...\e[0m"
+    cp local.conf /etc/nginx/conf.d/local.conf
+    echo -e "\033[36mMaking dir. Please Wait...\e[0m"
+    mkdir -p /etc/nginx/ssl
+    echo -e "\033[36mCopying files. Please Wait...\e[0m"
+    cp ssl.rules /etc/nginx/ssl/ssl.rules
+    echo -e "\033[36mCopying files. Please Wait...\e[0m"
+    cp nginx.conf /etc/nginx/nginx.conf
+}
+FWUPDATE()
+{
+    #UPDATE FIREWALLD FOR SERVER
+    echo -e "\033[36mUpdating firewalld. Please Wait...\e[0m"
+    sudo firewall-cmd --permanent --zone=public --add-service=http
+    sudo firewall-cmd --permanent --zone=public --add-service=https
+    sudo firewall-cmd --reload
 
-# Generate the Keys
-if [ $OPT_SSL = "False" ]
-then
-    mkdir -p /etc/nginx/ssl/keys
-    openssl genpkey -algorithm RSA -out /etc/nginx/ssl/keys/private.key -pkeyopt rsa_keygen_bits:2048
-    openssl rsa -in /etc/nginx/ssl/keys/private.key -out /etc/nginx/ssl/keys/private-decrypted.key
-    openssl req -new -sha256 -key /etc/nginx/ssl/keys/private-decrypted.key -subj "/CN=$SERVER_NAME" -out /etc/nginx/ssl/keys/$SERVER_NAME.csr
-    openssl x509 -req -days 365 -in /etc/nginx/ssl/keys/$SERVER_NAME.csr -signkey /etc/nginx/ssl/keys/private.key -out /etc/nginx/ssl/keys/server.crt
-    rm /etc/nginx/ssl/keys/private-decrypted.key
-    rm /etc/nginx/ssl/keys/$SERVER_NAME.csr
-else
-    wget -P /etc/apt/sources.list.d https://sslmate.com/apt/ubuntu1404/sslmate.list
-    wget -P /etc/apt/trusted.gpg.d https://sslmate.com/apt/ubuntu1404/sslmate.gpg
-    apt-get update
-    apt-get install -y sslmate
+}
+SSLMATE()
+{
+    echo -e "\033[36mGetting sslmate stuff. Please Wait...\e[0m"
+    wget -P /etc/yum.repos.d https://sslmate.com/yum/centos/SSLMate.repo
+    wget -P /etc/pki/rpm-gpg https://sslmate.com/yum/centos/RPM-GPG-KEY-SSLMate
+    #INSTALL SSLMATE
+    echo -e "\033[36mInstalling sslmate stuff. Please Wait...\e[0m"
+    yum install -y sslmate
+    echo -e "\033[36mBuying sslmate stuff. YOU NEED AN EXISTING SSLMATE ACCOUNT - https://sslmate.com, waiting...\e[0m"
     sslmate buy $SERVER_NAME
+    echo -e "\033[36mLinking sslmate things and stuff. Please Wait...\e[0m"
     ln -s /etc/sslmate/$SERVER_NAME.key /etc/nginx/ssl/keys/private.key
     ln -s /etc/sslmate/$SERVER_NAME.chained.crt /etc/nginx/ssl/keys/server.crt
-fi
+    openssl dhparam -outform pem -out /etc/nginx/ssl/dhparam2048.pem 2048
 
-openssl dhparam -outform pem -out /etc/nginx/ssl/dhparam2048.pem 2048
+}
+CLEANUP()
+{
+    echo -e "\033[36mReplacing things and stuff. Please Wait...\e[0m"
+    sed -i "s/SERVER_NAME/$SERVER_NAME/" /etc/nginx/conf.d/local.conf
+    sed -i "s/PORT_NUMBER/$OPT_A/" /etc/nginx/conf.d/local.conf
+    # sed -i "s/SSL_ROOT/$SSL_ROOT" /etc/nginx/ssl/ssl.rules
+    sudo systemctl restart nginx
 
-sed -i "s/SERVER_NAME/$SERVER_NAME/" /etc/nginx/conf.d/local.conf
-sed -i "s/PORT_NUMBER/$OPT_A/" /etc/nginx/conf.d/local.conf
-# sed -i "s/SSL_ROOT/$SSL_ROOT" /etc/nginx/ssl/ssl.rules
+}
+
+HOSTNAMESTUFF
+sleep 1
+NGINXREPO
+sleep 1
+INSTALLNGINX
+sleep 1
+ENABLENGINX
+sleep 1
+FANCYNGINX
+sleep 1
+FWUPDATE
+sleep 1
+SSLMATE
+sleep 1
+CLEANUP
+
+echo -e "\033[36mAll done with things and stuff.\e[0m"
