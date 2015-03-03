@@ -13,7 +13,7 @@ pretty straight forward stuff
 
 To execute:
 ```
-git clone https://github.com/vzvenyach/nginx-ssl.git
+git clone https://github.com/mylivingweb/nginx-ssl.git
 cd nginx-ssl
 sudo ./bootstrap.sh
 
