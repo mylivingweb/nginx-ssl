@@ -1,6 +1,6 @@
 # NGINX-SSL - CentOS 7
 
-A simple script to provision NGINX with a self-signed SSL certificate on a Centos 7 box.
+A simple script to provision NGINX with a sslmate SSL certificate on a Centos 7 box.
 
 ```
 checks if NGINX is installed, if not, then installs it.
